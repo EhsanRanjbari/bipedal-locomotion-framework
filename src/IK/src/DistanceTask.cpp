@@ -132,6 +132,8 @@ bool DistanceTask::initialize(std::weak_ptr<const ParametersHandler::IParameters
     }
     
     // here you need to get the indexes of the frames and check that they exists
+    
+    world_T_framePosition.resize(3,1);
 
     m_isInitialized = true;
 
