@@ -50,7 +50,6 @@ class DistanceTask : public IKLinearTask
     std::string m_frameName;
     std::string m_baseName;
     std::string m_frameEEName;
-    std::string m_baseFrameName;
     std::string m_targetFrameName;
 
 public:
