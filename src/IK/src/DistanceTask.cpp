@@ -125,12 +125,6 @@ bool DistanceTask::initialize(std::weak_ptr<const ParametersHandler::IParameters
         return false;
     }
 
-    if (!ptr->getParameter("base_frame_name", m_baseFrameName)) 
-    {
-        log()->error("{} [{}] to get the base frame name.", errorPrefix, m_description);
-        return false;
-    }
-
     if (!ptr->getParameter("target_frame_name", m_targetFrameName)) 
     {
         log()->error("{} [{}] to get the end effector frame name.", errorPrefix, m_description);
@@ -160,7 +154,7 @@ bool DistanceTask::update()
     }
     else
     {
-    	world_T_framePosition = toEigen(m_kinDyn->getRelativeTransform(m_baseFrameName, m_targetFrameName).getPosition());
+    	world_T_framePosition = toEigen(m_kinDyn->getRelativeTransform(m_baseName, m_targetFrameName).getPosition());
     }
 
     // get the jacobian
