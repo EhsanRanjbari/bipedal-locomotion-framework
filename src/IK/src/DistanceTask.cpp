@@ -60,7 +60,7 @@ bool DistanceTask::setVariablesHandler(const System::VariablesHandler& variables
     m_A.setZero();
     m_b.resize(m_DoFs);
     m_b.setZero();
-    m_jacobian.resize(6, 6+m_kinDyn->getNrOfDegreesOfFreedom()); //?
+    m_jacobian.resize(6, 6 + m_kinDyn->getNrOfDegreesOfFreedom()); //?
 
     return true;
 }
@@ -166,10 +166,10 @@ bool DistanceTask::update()
         return m_isValid;
     }
 
-    m_computedDistance = sqrt(pow(world_T_framePosition(0),2) + pow(world_T_framePosition(1),2));
+    m_computedDistance = sqrt(pow(world_T_framePosition(0),2) + pow(world_T_framePosition(1),2) + pow(world_T_framePosition(2),2));
     
     m_A.resize(1, 6 + m_kinDyn->getNrOfDegreesOfFreedom()); //the jacobian matrix 1x(6+ndofs)
-    m_A = (world_T_framePosition.transpose() * m_jacobian.topRightCorner(3, 6 + m_kinDyn->getNrOfDegreesOfFreedom())) / (std::max(0.001, m_computedDistance)); //1x15 TODO: Which Thimble Indices???
+    m_A = (world_T_framePosition.transpose() * m_jacobian.topRightCorner(3, 6 + m_kinDyn->getNrOfDegreesOfFreedom())) / (std::max(0.001, m_computedDistance));
     m_b << m_kp * (m_desiredDistance - m_computedDistance);
 
     // A and b are now valid
