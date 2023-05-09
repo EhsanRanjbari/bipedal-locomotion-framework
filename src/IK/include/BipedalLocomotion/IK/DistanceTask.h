@@ -45,7 +45,6 @@ class DistanceTask : public IKLinearTask
     Eigen::MatrixXd world_T_framePosition;
     double m_kp;
     double m_desiredDistance{0.0};
-    double m_computedDistance{0.0};
 
     std::string m_frameName;
     std::string m_baseName;
@@ -53,6 +52,8 @@ class DistanceTask : public IKLinearTask
     std::string m_targetFrameName;
 
 public:
+
+    double m_computedDistance{0.0};
 
     bool setKinDyn(std::shared_ptr<iDynTree::KinDynComputations> kinDyn) override;
 
