@@ -61,11 +61,15 @@ bool DistanceTask::setVariablesHandler(const System::VariablesHandler& variables
     m_b.resize(m_DoFs);
     m_b.setZero();
     m_jacobian.resize(6, 6 + m_kinDyn->getNrOfDegreesOfFreedom()); //?
+    m_jacobian.setZero();
+    m_relativeJacobian.resize(6, m_kinDyn->getNrOfDegreesOfFreedom());
+    m_relativeJacobian.setZero();
 
     return true;
 }
 
-bool DistanceTask::initialize(std::weak_ptr<const ParametersHandler::IParametersHandler> paramHandler)
+bool DistanceTask::initialize(
+    std::weak_ptr<const ParametersHandler::IParametersHandler> paramHandler)
 {
     constexpr auto errorPrefix = "[DistanceTask::initialize]";
 
@@ -111,18 +115,28 @@ bool DistanceTask::initialize(std::weak_ptr<const ParametersHandler::IParameters
         log()->error("{} [{}] to get the proportional linear gain.", errorPrefix, m_description);
         return false;
     }
-    
+
     // set the base frame name
-    if (!ptr->getParameter("base_name", m_baseName)) 
+    if (!ptr->getParameter("base_name", m_baseName))
     {
-        log()->debug("{} [{}] to get the base name. Using default \"\"", errorPrefix, m_description);
+        log()->debug("{} [{}] to get the base name. Using default \"\"",
+                     errorPrefix,
+                     m_description);
     }
 
     // set the finger tip frame Name
-    if (!ptr->getParameter("frameEE_name", m_frameEEName)) 
+    if (!ptr->getParameter("frameEE_name", m_frameEEName))
     {
         log()->error("{} [{}] to get the end effector frame name.", errorPrefix, m_description);
         return false;
+    }
+
+    if (m_baseName != "")
+    {
+        m_baseIndex = m_kinDyn->getFrameIndex(m_baseName);
+
+        if (m_baseIndex == iDynTree::FRAME_INVALID_INDEX)
+            return false;
     }
 
     if (!ptr->getParameter("target_frame_name", m_targetFrameName)) 
@@ -130,6 +144,11 @@ bool DistanceTask::initialize(std::weak_ptr<const ParametersHandler::IParameters
         log()->error("{} [{}] to get the end effector frame name.", errorPrefix, m_description);
         return false;
     }
+
+    m_targetFrameIndex = m_kinDyn->getFrameIndex(m_targetFrameName);
+
+    if (m_targetFrameIndex == iDynTree::FRAME_INVALID_INDEX)
+        return false;
     
     // here you need to get the indexes of the frames and check that they exists
     
@@ -153,17 +172,27 @@ bool DistanceTask::update()
     {
     	world_T_framePosition = toEigen(m_kinDyn->getWorldTransform(m_frameEEName).getPosition());
 
+            // get the jacobian
+        if (!m_kinDyn->getFrameFreeFloatingJacobian(m_frameEEName, m_jacobian))
+        {
+            log()->error("[DistanceTask::update] Unable to get the jacobian.");
+            return m_isValid;
+        }
+
     }
     else
     {
     	world_T_framePosition = toEigen(m_kinDyn->getRelativeTransform(m_baseName, m_targetFrameName).getPosition());
-    }
 
-    // get the jacobian
-    if (!m_kinDyn->getFrameFreeFloatingJacobian(m_frameEEName, m_jacobian))
-    {
-        log()->error("[DistanceTask::update] Unable to get the jacobian.");
-        return m_isValid;
+            // get the jacobian
+        if (!m_kinDyn->getRelativeJacobian(m_baseIndex, m_targetFrameIndex, m_relativeJacobian))
+        {
+            log()->error("[DistanceTask::update] Unable to get the relative jacobian.");
+            return m_isValid;
+        }
+
+        m_jacobian.topRightCorner(3, m_kinDyn->getNrOfDegreesOfFreedom()) = m_relativeJacobian;
+
     }
 
     m_computedDistance = sqrt(pow(world_T_framePosition(0),2) + pow(world_T_framePosition(1),2) + pow(world_T_framePosition(2),2));

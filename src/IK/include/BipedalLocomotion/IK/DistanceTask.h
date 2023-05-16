@@ -41,7 +41,7 @@ class DistanceTask : public IKLinearTask
 
     std::size_t m_DoFs{1}; /**< DoFs associated to the task */
 
-    Eigen::MatrixXd m_jacobian;
+    Eigen::MatrixXd m_jacobian, m_relativeJacobian;
     Eigen::MatrixXd world_T_framePosition;
     double m_kp;
     double m_desiredDistance{0.0};
@@ -50,6 +50,8 @@ class DistanceTask : public IKLinearTask
     std::string m_baseName;
     std::string m_frameEEName;
     std::string m_targetFrameName;
+    iDynTree::FrameIndex m_baseIndex, m_targetFrameIndex;
+
 
 public:
 
