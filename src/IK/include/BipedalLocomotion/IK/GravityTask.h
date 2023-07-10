@@ -47,6 +47,8 @@ class GravityTask : public IKLinearTask
     double m_theta;
     Eigen::MatrixXd m_currentAcc;
     Eigen::MatrixXd m_currentAccNorm;
+    Eigen::MatrixXd m_Am;
+    Eigen::MatrixXd m_bm;
 
     std::string m_baseName;
     std::string m_targetFrameName;

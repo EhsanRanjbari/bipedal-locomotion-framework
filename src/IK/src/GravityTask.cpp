@@ -60,12 +60,18 @@ bool GravityTask::setVariablesHandler(const System::VariablesHandler& variablesH
     m_A.setZero();
     m_b.resize(m_DoFs);
     m_b.setZero();
-    m_jacobian.resize(6, 6 + m_kinDyn->getNrOfDegreesOfFreedom()); //?
+    m_jacobian.resize(6, 6 + m_kinDyn->getNrOfDegreesOfFreedom());
     m_jacobian.setZero();
     m_relativeJacobian.resize(6, m_kinDyn->getNrOfDegreesOfFreedom());
     m_relativeJacobian.setZero();
     m_currentAcc.resize(3,1);
     m_currentAccNorm.resize(3,1);
+    m_Am.resize(2,3);
+    m_Am << 1, 0, 0,
+            0, 1, 0;
+    m_bm.resize(2,3);
+    m_bm << 0 ,-1, 0,
+            1, 0, 0;
 
     return true;
 }
@@ -171,10 +177,10 @@ bool GravityTask::update()
     // std::cerr << "m_currentAccNorm: " << std::endl << m_currentAccNorm << std::endl;
      
     // Compute the angle between two vectors
-    m_theta = acos(m_currentAccNorm(1)); // m_theta = acos(An_y): TODO: There might be a (-). Check the direction of the y.
+    // m_theta = acos(m_currentAccNorm(2)); // m_theta = acos(An_y): TODO: There might be a (-). Check the direction of the y.
 
     //limit the 0<= theta <=3
-    m_theta = std::max(0.0, std::min(3.001, m_theta));
+    // m_theta = std::max(0.0, std::min(3.001, m_theta));
 
     // here to compute the distance, you need to get the transform.
     
@@ -196,13 +202,13 @@ bool GravityTask::update()
             log()->error("[GravityTask::update] Unable to get the relative jacobian.");
             return m_isValid;
         }
-        m_jacobian.row(4) = m_relativeJacobian;
+        m_jacobian.bottomRightCorner(3, m_kinDyn->getNrOfDegreesOfFreedom()) = m_relativeJacobian;
 
     }
     
-    m_A.resize(1, 6 + m_kinDyn->getNrOfDegreesOfFreedom()); //the jacobian matrix 1x(6+ndofs)
-    m_A = m_relativeJacobian + (0.001 * Eigen::MatrixXd::Ones(1, 6 + m_kinDyn->getNrOfDegreesOfFreedom()));
-    m_b << -m_kp * (sin(m_theta)); // TODO: w = -k(yt x yc) + wt. What is wt?
+    m_A.resize(2, 6 + m_kinDyn->getNrOfDegreesOfFreedom()); //the jacobian matrix 1x(6+ndofs)
+    m_A = m_Am * m_relativeJacobian + (0.001 * Eigen::MatrixXd::Ones(1, 6 + m_kinDyn->getNrOfDegreesOfFreedom()));
+    m_b << -m_kp * m_bm * m_currentAccNorm;
 
     // A and b are now valid
     m_isValid = true;
