@@ -70,8 +70,8 @@ bool GravityTask::setVariablesHandler(const System::VariablesHandler& variablesH
     m_Am << 1, 0, 0,
             0, 1, 0;
     m_bm.resize(2,3);
-    m_bm << 0 ,-1, 0,
-            1, 0, 0;
+    m_bm << 0 ,1, 0,
+            -1, 0, 0;
 
     return true;
 }
@@ -173,16 +173,6 @@ bool GravityTask::update()
     {
         m_currentAccNorm(i) = m_currentAcc(i) / m_accDenomNorm;
     }
-
-    // std::cerr << "m_currentAccNorm: " << std::endl << m_currentAccNorm << std::endl;
-     
-    // Compute the angle between two vectors
-    // m_theta = acos(m_currentAccNorm(2)); // m_theta = acos(An_y): TODO: There might be a (-). Check the direction of the y.
-
-    //limit the 0<= theta <=3
-    // m_theta = std::max(0.0, std::min(3.001, m_theta));
-
-    // here to compute the distance, you need to get the transform.
     
     if (m_baseName == "")
     {
@@ -196,7 +186,7 @@ bool GravityTask::update()
     }
     else
     {
-            // get the jacobian
+            // get the relative jacobian
         if (!m_kinDyn->getRelativeJacobian(m_baseIndex, m_targetFrameIndex, m_relativeJacobian))
         {
             log()->error("[GravityTask::update] Unable to get the relative jacobian.");
@@ -215,7 +205,7 @@ bool GravityTask::update()
     return m_isValid;
 }
 
-bool GravityTask::setDesiredGravityDir(Eigen::MatrixXd desiredGravityDir)
+bool GravityTask::setEstimateGravityDir(Eigen::MatrixXd currentGravityDir)
 {
     m_currentAcc = desiredGravityDir;
 
