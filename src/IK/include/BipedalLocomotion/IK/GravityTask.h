@@ -64,7 +64,7 @@ public:
 
     bool update() override;
 
-    bool setDesiredGravityDir(Eigen::MatrixXd desiredGravityDir);
+    bool setEstimateGravityDir(Eigen::MatrixXd currentGravityDir);
 
     std::size_t size() const override;
 
