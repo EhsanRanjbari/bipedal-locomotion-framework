@@ -207,7 +207,7 @@ bool GravityTask::update()
 
 bool GravityTask::setEstimateGravityDir(Eigen::MatrixXd currentGravityDir)
 {
-    m_currentAcc = desiredGravityDir;
+    m_currentAcc = currentGravityDir;
 
     return true;
 }
