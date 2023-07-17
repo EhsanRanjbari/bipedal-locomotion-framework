@@ -5,7 +5,6 @@
  * distributed under the terms of the BSD-3-Clause license.
  */
 
-#include <BipedalLocomotion/Conversions/ManifConversions.h>
 #include <BipedalLocomotion/IK/GravityTask.h>
 #include <BipedalLocomotion/TextLogging/Logger.h>
 
@@ -60,8 +59,8 @@ bool GravityTask::setVariablesHandler(const System::VariablesHandler& variablesH
     m_A.setZero();
     m_b.resize(m_DoFs);
     m_b.setZero();
-    m_jacobian.resize(6, 6 + m_kinDyn->getNrOfDegreesOfFreedom());
-    m_jacobian.setZero();
+    m_Angularjacobian.resize(3, m_kinDyn->getNrOfDegreesOfFreedom());
+    m_Angularjacobian.setZero();
     m_relativeJacobian.resize(6, m_kinDyn->getNrOfDegreesOfFreedom());
     m_relativeJacobian.setZero();
     m_currentAcc.resize(3,1);
@@ -147,13 +146,6 @@ bool GravityTask::initialize(
         return false;
     }
 
-    m_targetFrameIndex = m_kinDyn->getFrameIndex(m_targetFrameName);
-
-    if (m_targetFrameIndex == iDynTree::FRAME_INVALID_INDEX)
-        return false;
-    
-    // here you need to get the indexes of the frames and check that they exists
-
     m_isInitialized = true;
 
     return true;
@@ -161,7 +153,6 @@ bool GravityTask::initialize(
 
 bool GravityTask::update()
 {
-    using namespace BipedalLocomotion::Conversions;
     using namespace iDynTree;
 
     m_isValid = false;
@@ -173,39 +164,27 @@ bool GravityTask::update()
     {
         m_currentAccNorm(i) = m_currentAcc(i) / m_accDenomNorm;
     }
-    
-    if (m_baseName == "")
-    {
-            // get the jacobian
-        if (!m_kinDyn->getFrameFreeFloatingJacobian(m_targetFrameIndex, m_jacobian))
-        {
-            log()->error("[GravityTask::update] Unable to get the jacobian.");
-            return m_isValid;
-        }
 
-    }
-    else
+        // get the relative jacobian
+    if (!m_kinDyn->getRelativeJacobian(m_baseIndex, m_targetFrameIndex, m_relativeJacobian))
     {
-            // get the relative jacobian
-        if (!m_kinDyn->getRelativeJacobian(m_baseIndex, m_targetFrameIndex, m_relativeJacobian))
-        {
-            log()->error("[GravityTask::update] Unable to get the relative jacobian.");
-            return m_isValid;
-        }
-        m_jacobian.bottomRightCorner(3, m_kinDyn->getNrOfDegreesOfFreedom()) = m_relativeJacobian;
-
+        log()->error("[GravityTask::update] Unable to get the relative jacobian.");
+        return m_isValid;
     }
+
+    // get the angular part of the jacobian
+    m_Angularjacobian = m_relativeJacobian.bottomRightCorner(3, m_kinDyn->getNrOfDegreesOfFreedom());
     
-    m_A.resize(2, 6 + m_kinDyn->getNrOfDegreesOfFreedom()); //the jacobian matrix 1x(6+ndofs)
-    m_A = m_Am * m_relativeJacobian + (0.001 * Eigen::MatrixXd::Ones(1, 6 + m_kinDyn->getNrOfDegreesOfFreedom()));
-    m_b << -m_kp * m_bm * m_currentAccNorm;
+    m_A.resize(2, m_kinDyn->getNrOfDegreesOfFreedom());
+    m_A = m_Am * m_Angularjacobian;
+    m_b << - m_kp * m_bm * m_currentAccNorm;
 
     // A and b are now valid
     m_isValid = true;
     return m_isValid;
 }
 
-bool GravityTask::setEstimateGravityDir(Eigen::MatrixXd currentGravityDir)
+bool GravityTask::setEstimateGravityDir(const Eigen::Ref<const Eigen::MatrixXd> currentGravityDir)
 {
     m_currentAcc = currentGravityDir;
 

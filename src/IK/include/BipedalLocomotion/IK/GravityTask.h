@@ -12,8 +12,6 @@
 
 #include <iDynTree/KinDynComputations.h>
 
-#include <manif/manif.h>
-
 #include <BipedalLocomotion/IK/IKLinearTask.h>
 
 #include <LieGroupControllers/ProportionalDerivativeController.h>
@@ -39,12 +37,11 @@ class GravityTask : public IKLinearTask
     std::shared_ptr<iDynTree::KinDynComputations> m_kinDyn; /**< Pointer to a KinDynComputations
                                                                object */
 
-    std::size_t m_DoFs{1}; /**< DoFs associated to the task */
+    std::size_t m_DoFs{2}; /**< DoFs associated to the task */
 
-    Eigen::MatrixXd m_jacobian, m_relativeJacobian;
     double m_kp;
     double m_accDenomNorm;
-    double m_theta;
+    Eigen::MatrixXd m_Angularjacobian, m_relativeJacobian;
     Eigen::MatrixXd m_currentAcc;
     Eigen::MatrixXd m_currentAccNorm;
     Eigen::MatrixXd m_Am;
@@ -64,7 +61,7 @@ public:
 
     bool update() override;
 
-    bool setEstimateGravityDir(Eigen::MatrixXd currentGravityDir);
+    bool setEstimateGravityDir(const Eigen::Ref<const Eigen::MatrixXd> currentGravityDir);
 
     std::size_t size() const override;
 
