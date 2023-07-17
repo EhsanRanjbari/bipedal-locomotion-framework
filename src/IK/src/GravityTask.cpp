@@ -140,7 +140,7 @@ bool GravityTask::initialize(
     }
 
     // set the finger tip frame Name
-    if (!ptr->getParameter("target_frame_name", m_targetFrameName)) 
+    if (!ptr->getParameter("target_frame_name", m_targetFrameName))
     {
         log()->error("{} [{}] to get the end effector frame name.", errorPrefix, m_description);
         return false;
