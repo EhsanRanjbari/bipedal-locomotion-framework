@@ -100,6 +100,14 @@ bool DistanceTask::initialize(
         return false;
     }
 
+    if (!ptr->getParameter("robot_velocity_variable_name", m_robotVelocityVariable.name))
+    {
+        log()->error("{} [{}] while retrieving the robot velocity variable.",
+                     errorPrefix,
+                     m_description);
+        return false;
+    }
+
     // set the gains for the controllers
     if (!ptr->getParameter("kp", m_kp))
     {
