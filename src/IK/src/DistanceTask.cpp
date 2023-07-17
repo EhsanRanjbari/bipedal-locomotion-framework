@@ -100,15 +100,6 @@ bool DistanceTask::initialize(
         return false;
     }
 
-    std::string robotVelocityVariableName;
-    if (!ptr->getParameter("robot_velocity_variable_name", m_robotVelocityVariable.name))
-    {
-        log()->error("{} [{}] while retrieving the robot velocity variable.",
-                     errorPrefix,
-                     m_description);
-        return false;
-    }
-
     // set the gains for the controllers
     if (!ptr->getParameter("kp", m_kp))
     {
@@ -125,7 +116,7 @@ bool DistanceTask::initialize(
     }
 
     // set the finger tip frame Name
-    if (!ptr->getParameter("frameEE_name", m_frameEEName))
+    if (!ptr->getParameter("target_frame_name", m_targetFrameName))
     {
         log()->error("{} [{}] to get the end effector frame name.", errorPrefix, m_description);
         return false;
@@ -139,20 +130,11 @@ bool DistanceTask::initialize(
             return false;
     }
 
-    if (!ptr->getParameter("target_frame_name", m_targetFrameName)) 
-    {
-        log()->error("{} [{}] to get the end effector frame name.", errorPrefix, m_description);
-        return false;
-    }
-
     m_targetFrameIndex = m_kinDyn->getFrameIndex(m_targetFrameName);
-
-    if (m_targetFrameIndex == iDynTree::FRAME_INVALID_INDEX)
-        return false;
     
     // here you need to get the indexes of the frames and check that they exists
     
-    world_T_framePosition.resize(3,1);
+    m_world_T_framePosition.resize(3,1);
 
     m_isInitialized = true;
 
@@ -170,10 +152,10 @@ bool DistanceTask::update()
     
     if (m_baseName == "")
     {
-    	world_T_framePosition = toEigen(m_kinDyn->getWorldTransform(m_frameEEName).getPosition());
+    	m_world_T_framePosition = toEigen(m_kinDyn->getWorldTransform(m_targetFrameName).getPosition());
 
             // get the jacobian
-        if (!m_kinDyn->getFrameFreeFloatingJacobian(m_frameEEName, m_jacobian))
+        if (!m_kinDyn->getFrameFreeFloatingJacobian(m_targetFrameName, m_jacobian))
         {
             log()->error("[DistanceTask::update] Unable to get the jacobian.");
             return m_isValid;
@@ -182,7 +164,7 @@ bool DistanceTask::update()
     }
     else
     {
-    	world_T_framePosition = toEigen(m_kinDyn->getRelativeTransform(m_baseName, m_targetFrameName).getPosition());
+    	m_world_T_framePosition = toEigen(m_kinDyn->getRelativeTransform(m_baseName, m_targetFrameName).getPosition());
 
             // get the jacobian
         if (!m_kinDyn->getRelativeJacobian(m_baseIndex, m_targetFrameIndex, m_relativeJacobian))
@@ -195,10 +177,10 @@ bool DistanceTask::update()
 
     }
 
-    m_computedDistance = sqrt(pow(world_T_framePosition(0),2) + pow(world_T_framePosition(1),2) + pow(world_T_framePosition(2),2));
+    m_computedDistance = sqrt(pow(m_world_T_framePosition(0),2) + pow(m_world_T_framePosition(1),2) + pow(m_world_T_framePosition(2),2));
     
     m_A.resize(1, 6 + m_kinDyn->getNrOfDegreesOfFreedom()); //the jacobian matrix 1x(6+ndofs)
-    m_A = (world_T_framePosition.transpose() * m_jacobian.topRightCorner(3, 6 + m_kinDyn->getNrOfDegreesOfFreedom())) / (std::max(0.001, m_computedDistance));
+    m_A = (m_world_T_framePosition.transpose() * m_jacobian.topRightCorner(3, 6 + m_kinDyn->getNrOfDegreesOfFreedom())) / (std::max(0.001, m_computedDistance));
     m_b << m_kp * (m_desiredDistance - m_computedDistance);
 
     // A and b are now valid
