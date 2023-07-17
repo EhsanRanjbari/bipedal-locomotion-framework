@@ -24,10 +24,7 @@ namespace IK
 class GravityTask : public IKLinearTask
 {
 
-    System::VariablesHandler::VariableDescription m_robotVelocityVariable; /**< Variable
-                                                                              describing the robot
-                                                                              velocity (base +
-                                                                              joint) */
+    System::VariablesHandler::VariableDescription m_robotVelocityVariable;/**< Variable describing the robot velocity (base + joint) */
     
     static constexpr std::size_t m_spatialVelocitySize{6}; /**< Size of the spatial velocity vector. */
 
