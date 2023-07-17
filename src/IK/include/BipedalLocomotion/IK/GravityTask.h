@@ -25,7 +25,7 @@ class GravityTask : public IKLinearTask
 {
 
     System::VariablesHandler::VariableDescription m_robotVelocityVariable;/**< Variable describing the robot velocity (base + joint) */
-    
+
     static constexpr std::size_t m_spatialVelocitySize{6}; /**< Size of the spatial velocity vector. */
 
     bool m_isInitialized{false}; /**< True if the task has been initialized. */

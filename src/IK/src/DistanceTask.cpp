@@ -139,9 +139,9 @@ bool DistanceTask::initialize(
     }
 
     m_targetFrameIndex = m_kinDyn->getFrameIndex(m_targetFrameName);
-    
+
     // here you need to get the indexes of the frames and check that they exists
-    
+
     m_world_T_framePosition.resize(3,1);
 
     m_isInitialized = true;
@@ -155,9 +155,9 @@ bool DistanceTask::update()
     using namespace iDynTree;
 
     m_isValid = false;
-    
+
     // here to compute the distance, you need to get the transform.
-    
+
     if (m_baseName == "")
     {
     	m_world_T_framePosition = toEigen(m_kinDyn->getWorldTransform(m_targetFrameName).getPosition());
@@ -186,7 +186,7 @@ bool DistanceTask::update()
     }
 
     m_computedDistance = sqrt(pow(m_world_T_framePosition(0),2) + pow(m_world_T_framePosition(1),2) + pow(m_world_T_framePosition(2),2));
-    
+
     m_A.resize(1, 6 + m_kinDyn->getNrOfDegreesOfFreedom()); //the jacobian matrix 1x(6+ndofs)
     m_A = (m_world_T_framePosition.transpose() * m_jacobian.topRightCorner(3, 6 + m_kinDyn->getNrOfDegreesOfFreedom())) / (std::max(0.001, m_computedDistance));
     m_b << m_kp * (m_desiredDistance - m_computedDistance);

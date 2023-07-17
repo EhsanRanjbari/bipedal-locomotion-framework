@@ -174,7 +174,7 @@ bool GravityTask::update()
 
     // get the angular part of the jacobian
     m_Angularjacobian = m_relativeJacobian.bottomRightCorner(3, m_kinDyn->getNrOfDegreesOfFreedom());
-    
+
     m_A.resize(2, m_kinDyn->getNrOfDegreesOfFreedom());
     m_A = m_Am * m_Angularjacobian;
     m_b << - m_kp * m_bm * m_currentAccNorm;
