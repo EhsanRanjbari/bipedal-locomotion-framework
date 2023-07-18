@@ -59,12 +59,12 @@ bool GravityTask::setVariablesHandler(const System::VariablesHandler& variablesH
     m_A.setZero();
     m_b.resize(m_DoFs);
     m_b.setZero();
-    m_Angularjacobian.resize(3, m_kinDyn->getNrOfDegreesOfFreedom());
+    m_Angularjacobian.resize(3, variablesHandler.getNumberOfVariables());
     m_Angularjacobian.setZero();
     m_relativeJacobian.resize(6, m_kinDyn->getNrOfDegreesOfFreedom());
     m_relativeJacobian.setZero();
-    m_currentAcc.resize(3,1);
-    m_currentAccNorm.resize(3,1);
+    m_currentAcc.setZero(3);
+    m_currentAccNorm.setZero(3);
     m_Am.resize(2,3);
     m_Am << 1, 0, 0,
             0, 1, 0;
@@ -146,6 +146,11 @@ bool GravityTask::initialize(
         return false;
     }
 
+    m_targetFrameIndex = m_kinDyn->getFrameIndex(m_targetFrameName);
+
+    if (m_targetFrameIndex == iDynTree::FRAME_INVALID_INDEX)
+        return false;
+
     m_isInitialized = true;
 
     return true;
@@ -165,7 +170,7 @@ bool GravityTask::update()
         m_currentAccNorm(i) = m_currentAcc(i) / m_accDenomNorm;
     }
 
-        // get the relative jacobian
+    // get the relative jacobian
     if (!m_kinDyn->getRelativeJacobian(m_baseIndex, m_targetFrameIndex, m_relativeJacobian))
     {
         log()->error("[GravityTask::update] Unable to get the relative jacobian.");
@@ -173,9 +178,8 @@ bool GravityTask::update()
     }
 
     // get the angular part of the jacobian
-    m_Angularjacobian = m_relativeJacobian.bottomRightCorner(3, m_kinDyn->getNrOfDegreesOfFreedom());
+    m_Angularjacobian.bottomRightCorner(3, m_kinDyn->getNrOfDegreesOfFreedom()) = m_relativeJacobian.bottomRightCorner(3, m_kinDyn->getNrOfDegreesOfFreedom());
 
-    m_A.resize(2, m_kinDyn->getNrOfDegreesOfFreedom());
     m_A = m_Am * m_Angularjacobian;
     m_b << - m_kp * m_bm * m_currentAccNorm;
 
@@ -184,7 +188,7 @@ bool GravityTask::update()
     return m_isValid;
 }
 
-bool GravityTask::setEstimateGravityDir(const Eigen::Ref<const Eigen::MatrixXd> currentGravityDir)
+bool GravityTask::setEstimateGravityDir(const Eigen::Ref<const Eigen::VectorXd> currentGravityDir)
 {
     m_currentAcc = currentGravityDir;
 

@@ -39,8 +39,8 @@ class GravityTask : public IKLinearTask
     double m_kp;
     double m_accDenomNorm;
     Eigen::MatrixXd m_Angularjacobian, m_relativeJacobian;
-    Eigen::MatrixXd m_currentAcc;
-    Eigen::MatrixXd m_currentAccNorm;
+    Eigen::VectorXd m_currentAcc;
+    Eigen::VectorXd m_currentAccNorm;
     Eigen::MatrixXd m_Am;
     Eigen::MatrixXd m_bm;
 
@@ -58,7 +58,7 @@ public:
 
     bool update() override;
 
-    bool setEstimateGravityDir(const Eigen::Ref<const Eigen::MatrixXd> currentGravityDir);
+    bool setEstimateGravityDir(const Eigen::Ref<const Eigen::VectorXd> currentGravityDir);
 
     std::size_t size() const override;
 
