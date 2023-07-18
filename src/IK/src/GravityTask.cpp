@@ -170,6 +170,8 @@ bool GravityTask::update()
         m_currentAccNorm(i) = m_currentAcc(i) / m_accDenomNorm;
     }
 
+    m_currentAccNorm = toEigen(m_kinDyn->getWorldTransform(m_targetFrameName).getRotation()) * m_currentAccNorm;
+
     // get the relative jacobian
     if (!m_kinDyn->getRelativeJacobian(m_baseIndex, m_targetFrameIndex, m_relativeJacobian))
     {
