@@ -64,6 +64,7 @@ bool GravityTask::setVariablesHandler(const System::VariablesHandler& variablesH
     m_relativeJacobian.resize(6, m_kinDyn->getNrOfDegreesOfFreedom());
     m_relativeJacobian.setZero();
     m_currentAcc.setZero(3);
+    m_currentGyro.setZero(3);
     m_currentAccNorm.setZero(3);
     m_Am.resize(2,3);
     m_Am << 1, 0, 0,
@@ -183,7 +184,7 @@ bool GravityTask::update()
     m_Angularjacobian.bottomRightCorner(3, m_kinDyn->getNrOfDegreesOfFreedom()) = m_relativeJacobian.bottomRightCorner(3, m_kinDyn->getNrOfDegreesOfFreedom());
 
     m_A = m_Am * m_Angularjacobian;
-    m_b << - m_kp * m_bm * m_currentAccNorm;
+    m_b << ( m_kp * m_bm * m_currentAccNorm) + 1000 * m_currentGyro.block<2,1>(1,0);
 
     // A and b are now valid
     m_isValid = true;
@@ -193,6 +194,13 @@ bool GravityTask::update()
 bool GravityTask::setEstimateGravityDir(const Eigen::Ref<const Eigen::VectorXd> currentGravityDir)
 {
     m_currentAcc = currentGravityDir;
+
+    return true;
+}
+
+bool GravityTask::setGyroscope(const Eigen::Ref<const Eigen::VectorXd> currentGyro)
+{
+    m_currentGyro = currentGyro * (M_PI)/180;
 
     return true;
 }

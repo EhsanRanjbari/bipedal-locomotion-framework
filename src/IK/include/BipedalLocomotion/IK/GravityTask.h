@@ -41,6 +41,7 @@ class GravityTask : public IKLinearTask
     Eigen::MatrixXd m_Angularjacobian, m_relativeJacobian;
     Eigen::VectorXd m_currentAcc;
     Eigen::VectorXd m_currentAccNorm;
+    Eigen::VectorXd m_currentGyro;
     Eigen::MatrixXd m_Am;
     Eigen::MatrixXd m_bm;
 
@@ -59,6 +60,8 @@ public:
     bool update() override;
 
     bool setEstimateGravityDir(const Eigen::Ref<const Eigen::VectorXd> currentGravityDir);
+
+    bool GravityTask::setGyroscope(const Eigen::Ref<const Eigen::VectorXd> currentGyro);
 
     std::size_t size() const override;
 
